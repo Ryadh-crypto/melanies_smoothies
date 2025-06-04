@@ -1,6 +1,6 @@
 # Import des packages nécessaires
 import streamlit as st
-import request
+import requests
 from snowflake.snowpark.functions import col
 
 # Connexion à Snowflake (assure-toi que secrets.toml est bien configuré)
@@ -47,6 +47,12 @@ if ingredients_list and name_on_order:
         st.success("✅ Your Smoothie is ordered!")
 
 
+# ✅ Appel à l’API externe (SmoothieFroot)
 smoothiefroot_response = requests.get("https://my.smoothiefroot.com/api/fruit/watermelon")
-st.text(smoothiefroot_response)
+
+if smoothiefroot_response.status_code == 200:
+    st.subheader("🍉 Watermelon info from SmoothieFroot API")
+    st.json(smoothiefroot_response.json())  # Affiche les données sous forme lisible
+else:
+    st.error("Failed to fetch watermelon info from SmoothieFroot API.")
 
