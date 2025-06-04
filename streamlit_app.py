@@ -30,23 +30,30 @@ if ingredients_list and name_on_order:
         session.sql(my_insert_stmt).collect()
         st.success("✅ Your Smoothie is ordered!")
 
-# --- 🔽 Partie API SmoothieFroot & sf_df ---
-# Récupération des infos fruit depuis l'API externe
-response = requests.get("https://my.smoothiefroot.com/api/fruit/watermelon")
-
-if response.status_code == 200:
-    fruit_data = response.json()
-
-    # Si le JSON est un dict, on l'encapsule dans une liste
-    if isinstance(fruit_data, dict):
-        sf_df = [fruit_data]  # ✅ streamlit accepte une liste de dictionnaires
-    elif isinstance(fruit_data, list):
-        sf_df = fruit_data
+# --- 🔽 Récupérer et afficher la nutrition des fruits choisis ---
+if ingredients_list:
+    st.subheader("Nutrition Info for Selected Fruits")
+    
+    nutrition_data = []
+    
+    for fruit in ingredients_list:
+        # L'API SmoothieFroot semble sensible à la casse, on met en minuscule
+        fruit_api_name = fruit.lower()
+        
+        url = f"https://my.smoothiefroot.com/api/fruit/{fruit_api_name}"
+        response = requests.get(url)
+        
+        if response.status_code == 200:
+            data = response.json()
+            if isinstance(data, dict):
+                nutrition_data.append(data)
+            else:
+                st.warning(f"No data format issue for {fruit}")
+        else:
+            st.warning(f"Failed to fetch data for {fruit}")
+    
+    # Affichage des infos nutritionnelles sans pandas
+    if nutrition_data:
+        st.dataframe(nutrition_data, use_container_width=True)
     else:
-        sf_df = []
-
-    # Affichage du DataFrame sans pandas
-    st.subheader("🍉 Watermelon Info from SmoothieFroot API")
-    st.dataframe(sf_df, use_container_width=True)
-else:
-    st.error("Failed to fetch watermelon info from SmoothieFroot API.")
+        st.info("No nutrition data available for the selected fruits.")
