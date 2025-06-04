@@ -43,32 +43,31 @@ if ingredients_list:
     
     unresolved_fruits = []  # Fruits introuvables même avec SEARCH_ON
     
-   for fruit in ingredients_list:
-    # Récupérer la valeur SEARCH_ON via pandas dataframe
-    try:
-        fruit_api_name = pd_df.loc[pd_df['FRUIT_NAME'] == fruit, 'SEARCH_ON'].iloc[0]
-    except IndexError:
-        # Cas où fruit pas trouvé dans pd_df, fallback au nom affiché en minuscule
-        fruit_api_name = fruit.lower()
-        st.warning(f"Warning: '{fruit}' not found in SEARCH_ON mapping, using fallback '{fruit_api_name}'")
-    
-    st.subheader(f"{fruit} Nutrition Information")
+    for fruit in ingredients_list:
+        # Récupérer la valeur SEARCH_ON via pandas dataframe
+        try:
+            fruit_api_name = pd_df.loc[pd_df['FRUIT_NAME'] == fruit, 'SEARCH_ON'].iloc[0]
+        except IndexError:
+            # Cas où fruit pas trouvé dans pd_df, fallback au nom affiché en minuscule
+            fruit_api_name = fruit.lower()
+            st.warning(f"Warning: '{fruit}' not found in SEARCH_ON mapping, using fallback '{fruit_api_name}'")
+        
+        st.subheader(f"{fruit} Nutrition Information")
 
-    url = f"https://my.smoothiefroot.com/api/fruit/{fruit_api_name.lower()}"
-    response = requests.get(url)
+        url = f"https://my.smoothiefroot.com/api/fruit/{fruit_api_name.lower()}"
+        response = requests.get(url)
 
-    if response.status_code == 200:
-        data = response.json()
-        if isinstance(data, dict):
-            st.dataframe([data], use_container_width=True)
+        if response.status_code == 200:
+            data = response.json()
+            if isinstance(data, dict):
+                st.dataframe([data], use_container_width=True)
+            else:
+                st.warning(f"No proper data format for {fruit}")
         else:
-            st.warning(f"No proper data format for {fruit}")
-    else:
-        st.warning(f"⚠️ Could not fetch nutrition data for {fruit} (searched as '{fruit_api_name}')")
-        unresolved_fruits.append(fruit)
+            st.warning(f"⚠️ Could not fetch nutrition data for {fruit} (searched as '{fruit_api_name}')")
+            unresolved_fruits.append(fruit)
 
-
-    # Afficher les fruits non trouvés pour info à Melanie
+    # Afficher les fruits non trouvés pour info à Melanie (en dehors de la boucle)
     if unresolved_fruits:
         st.info("The following fruits could not be resolved. Melanie may need to be informed:")
         st.write(unresolved_fruits)
