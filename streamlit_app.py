@@ -37,6 +37,7 @@ if ingredients_list:
     nutrition_data = []
     
     for fruit in ingredients_list:
+        st.subheader(f"{fruit} Nutrition Information")
         # L'API SmoothieFroot semble sensible à la casse, on met en minuscule
         fruit_api_name = fruit.lower()
         
