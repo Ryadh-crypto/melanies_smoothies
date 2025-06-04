@@ -1,10 +1,12 @@
 # Import des packages nécessaires
 import streamlit as st
+import request
 from snowflake.snowpark.functions import col
 
 # Connexion à Snowflake (assure-toi que secrets.toml est bien configuré)
 cnx = st.connection("snowflake")
 session = cnx.session()
+
 
 # Titre de l'application
 st.title("Customise Your Smoothie! 🥤")
@@ -43,3 +45,8 @@ if ingredients_list and name_on_order:
     if st.button("Submit Order"):
         session.sql(my_insert_stmt).collect()
         st.success("✅ Your Smoothie is ordered!")
+
+
+smoothiefroot_response = requests.get("https://my.smoothiefroot.com/api/fruit/watermelon")
+st.text(smoothiefroot_response)
+
