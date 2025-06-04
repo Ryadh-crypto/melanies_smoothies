@@ -33,27 +33,19 @@ if ingredients_list and name_on_order:
 # --- 🔽 Récupérer et afficher la nutrition des fruits choisis ---
 if ingredients_list:
     st.subheader("Nutrition Info for Selected Fruits")
-    
-    nutrition_data = []
-    
-   for fruit in ingredients_list:
-    st.subheader(f"{fruit} Nutrition Information")
 
-    fruit_api_name = fruit.lower()
-    url = f"https://my.smoothiefroot.com/api/fruit/{fruit_api_name}"
-    response = requests.get(url)
+    for fruit in ingredients_list:
+        st.subheader(f"{fruit} Nutrition Information")
 
-    if response.status_code == 200:
-        data = response.json()
-        if isinstance(data, dict):
-            st.dataframe([data], use_container_width=True)  # tableau juste sous le sous-titre
+        fruit_api_name = fruit.lower()
+        url = f"https://my.smoothiefroot.com/api/fruit/{fruit_api_name}"
+        response = requests.get(url)
+
+        if response.status_code == 200:
+            data = response.json()
+            if isinstance(data, dict):
+                st.dataframe([data], use_container_width=True)  # Affiche le tableau sous le sous-titre
+            else:
+                st.warning(f"No proper data format for {fruit}")
         else:
-            st.warning(f"No proper data format for {fruit}")
-    else:
-        st.warning(f"Failed to fetch data for {fruit}")
-    
-    # Affichage des infos nutritionnelles sans pandas
-    if nutrition_data:
-        st.dataframe(nutrition_data, use_container_width=True)
-    else:
-        st.info("No nutrition data available for the selected fruits.")
+            st.warning(f"Failed to fetch data for {fruit}")
