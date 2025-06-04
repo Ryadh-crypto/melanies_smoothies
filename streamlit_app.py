@@ -1,45 +1,45 @@
-# Import python packages
+# Import des packages nécessaires
 import streamlit as st
 from snowflake.snowpark.functions import col
 
-# Connexion à Snowflake via secrets.toml
-cnx = st.connection('snowflake')
+# Connexion à Snowflake (assure-toi que secrets.toml est bien configuré)
+cnx = st.connection("snowflake")
 session = cnx.session()
 
-# Titre et instructions
+# Titre de l'application
 st.title("Customise Your Smoothie! 🥤")
-st.write("Choose The Fruits You Want In Your Custom Smoothie !")
+st.write("Choose the fruits you want in your custom smoothie!")
 
-# Champ pour le nom
-name_on_order = st.text_input("Name On Smoothie")
-st.write("The Name Of Your Smoothie Will Be:", name_on_order)    
+# Entrée utilisateur pour le nom de la commande
+name_on_order = st.text_input("Name on Smoothie")
 
-# Récupération des fruits disponibles
-my_dataframe = session.table("smoothies.public.fruit_options").select(col('fruit_name'))
-st.dataframe(data=my_dataframe, use_container_width=True)
-st.write("Prévisualisation du DataFrame :")
-st.dataframe(my_dataframe)
+# Chargement et affichage des fruits disponibles
+my_dataframe = session.table("smoothies.public.fruit_options").select(col("fruit_name"))
+st.write("Available fruits:")
+st.dataframe(my_dataframe, use_container_width=True)
+
+# ⚠️ ATTENTION : Snowflake renvoie les noms de colonnes en MAJUSCULES
+fruit_list = [row["FRUIT_NAME"] for row in my_dataframe.collect()]
 
 # Sélection d'ingrédients
-fruit_list = [row["fruit_name"] for row in my_dataframe.collect()]  # Convertir DataFrame en liste
 ingredients_list = st.multiselect(
-    "Choose Up to 5 ingredients",
+    "Choose up to 5 ingredients",
     fruit_list,
     max_selections=5
 )
 
-# Création de la commande
-if ingredients_list:
-    ingredients_string = ', '.join(ingredients_list)
+# Si des ingrédients sont sélectionnés, on prépare l'insertion
+if ingredients_list and name_on_order:
+    ingredients_string = ", ".join(ingredients_list)
 
     my_insert_stmt = f"""
         INSERT INTO smoothies.public.orders (ingredients, name_on_order)
         VALUES ('{ingredients_string}', '{name_on_order}')
     """
 
-    st.write(my_insert_stmt)
-    
-    time_to_insert = st.button('Submit Order')
-    if time_to_insert:
+    st.write("SQL Statement to be executed:")
+    st.code(my_insert_stmt, language="sql")
+
+    if st.button("Submit Order"):
         session.sql(my_insert_stmt).collect()
-        st.success('Your Smoothie is ordered!', icon="✅")
+        st.success("✅ Your Smoothie is ordered!")
