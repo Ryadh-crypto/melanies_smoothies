@@ -17,6 +17,8 @@ st.write("The Name Of Your Smoothie Will Be:", name_on_order)
 # Récupération des fruits disponibles
 my_dataframe = session.table("smoothies.public.fruit_options").select(col('fruit_name'))
 st.dataframe(data=my_dataframe, use_container_width=True)
+st.write("Prévisualisation du DataFrame :")
+st.dataframe(my_dataframe)
 
 # Sélection d'ingrédients
 fruit_list = [row["fruit_name"] for row in my_dataframe.collect()]  # Convertir DataFrame en liste
