@@ -7,7 +7,6 @@ from snowflake.snowpark.functions import col
 cnx = st.connection("snowflake")
 session = cnx.session()
 
-
 # Titre de l'application
 st.title("Customise Your Smoothie! 🥤")
 st.write("Choose the fruits you want in your custom smoothie!")
@@ -15,22 +14,28 @@ st.write("Choose the fruits you want in your custom smoothie!")
 # Entrée utilisateur pour le nom de la commande
 name_on_order = st.text_input("Name on Smoothie")
 
-# Chargement et affichage des fruits disponibles
-my_dataframe = session.table("smoothies.public.fruit_options").select(col("fruit_name"))
-st.write("Available fruits:")
-st.dataframe(my_dataframe, use_container_width=True)
+# Chargement et affichage des fruits disponibles avec search term
+fruit_df = session.table("smoothies.public.fruit_options").select(col("fruit_name"), col("search_on"))
+fruit_rows = fruit_df.collect()
 
 # ⚠️ ATTENTION : Snowflake renvoie les noms de colonnes en MAJUSCULES
-fruit_list = [row["FRUIT_NAME"] for row in my_dataframe.collect()]
+# Création d'un dictionnaire {affichage: search_term}
+fruit_lookup = {row["FRUIT_NAME"]: row["SEARCH_ON"] for row in fruit_rows}
 
-# Sélection d'ingrédients
+st.write("Available fruits:")
+st.dataframe(fruit_rows, use_container_width=True)
+
+# Liste des fruits affichés dans le multiselect
+fruit_list = list(fruit_lookup.keys())
+
+# Sélection d'ingrédients (max 5)
 ingredients_list = st.multiselect(
     "Choose up to 5 ingredients",
     fruit_list,
     max_selections=5
 )
 
-# Si des ingrédients sont sélectionnés, on prépare l'insertion
+# Si des ingrédients sont sélectionnés et nom renseigné, on prépare l'insertion
 if ingredients_list and name_on_order:
     ingredients_string = ", ".join(ingredients_list)
 
@@ -46,25 +51,30 @@ if ingredients_list and name_on_order:
         session.sql(my_insert_stmt).collect()
         st.success("✅ Your Smoothie is ordered!")
 
+# --- 🔽 Partie API SmoothieFroot & affichage des infos fruits sélectionnés ---
 
-# --- 🔽 Partie API SmoothieFroot & sf_df ---
-# Récupération des infos fruit depuis l'API externe
-response = requests.get("https://my.smoothiefroot.com/api/fruit/watermelon")
+st.subheader("Fruit Info from SmoothieFroot API")
 
-if response.status_code == 200:
-    fruit_data = response.json()
+for fruit_display_name in ingredients_list:
+    # Récupérer le terme de recherche correspondant
+    search_term = fruit_lookup.get(fruit_display_name, fruit_display_name)
 
-    # Si le JSON est un dict, on l'encapsule dans une liste
-    if isinstance(fruit_data, dict):
-        sf_df = [fruit_data]  # ✅ streamlit accepte une liste de dictionnaires
-    elif isinstance(fruit_data, list):
-        sf_df = fruit_data
+    # Appel API (en minuscule)
+    url = f"https://my.smoothiefroot.com/api/fruit/{search_term.lower()}"
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        fruit_data = response.json()
+
+        # Si le JSON est un dict, on l'encapsule dans une liste pour st.dataframe
+        if isinstance(fruit_data, dict):
+            sf_df = [fruit_data]
+        elif isinstance(fruit_data, list):
+            sf_df = fruit_data
+        else:
+            sf_df = []
+
+        st.markdown(f"### 🍓 {fruit_display_name}")
+        st.dataframe(sf_df, use_container_width=True)
     else:
-        sf_df = []
-
-    # Affichage du DataFrame sans pandas
-    st.subheader("🍉 Watermelon Info from SmoothieFroot API")
-    st.dataframe(sf_df, use_container_width=True)
-else:
-    st.error("Failed to fetch watermelon info from SmoothieFroot API.")
-
+        st.warning(f"No data found for '{fruit_display_name}' using search term '{search_term}'.")
