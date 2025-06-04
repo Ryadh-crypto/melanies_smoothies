@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import pandas as pd
 from snowflake.snowpark.functions import col
 
 # Connexion à Snowflake
