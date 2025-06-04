@@ -47,12 +47,24 @@ if ingredients_list and name_on_order:
         st.success("✅ Your Smoothie is ordered!")
 
 
-# ✅ Appel à l’API externe (SmoothieFroot)
-smoothiefroot_response = requests.get("https://my.smoothiefroot.com/api/fruit/watermelon")
+# --- 🔽 Partie API SmoothieFroot & sf_df ---
+# Récupération des infos fruit depuis l'API externe
+response = requests.get("https://my.smoothiefroot.com/api/fruit/watermelon")
 
-if smoothiefroot_response.status_code == 200:
-    st.subheader("🍉 Watermelon info from SmoothieFroot API")
-    st.json(smoothiefroot_response.json())  # Affiche les données sous forme lisible
+if response.status_code == 200:
+    fruit_data = response.json()
+
+    # Si le JSON est un dict, on l'encapsule dans une liste
+    if isinstance(fruit_data, dict):
+        sf_df = [fruit_data]  # ✅ streamlit accepte une liste de dictionnaires
+    elif isinstance(fruit_data, list):
+        sf_df = fruit_data
+    else:
+        sf_df = []
+
+    # Affichage du DataFrame sans pandas
+    st.subheader("🍉 Watermelon Info from SmoothieFroot API")
+    st.dataframe(sf_df, use_container_width=True)
 else:
     st.error("Failed to fetch watermelon info from SmoothieFroot API.")
 
