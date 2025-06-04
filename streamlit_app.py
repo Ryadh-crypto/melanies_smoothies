@@ -14,6 +14,9 @@ name_on_order = st.text_input("Name on Smoothie")
 
 # Récupérer fruit_name + search_on depuis la table
 my_dataframe = session.table("smoothies.public.fruit_options").select(col("fruit_name"), col("search_on"))
+pd_df = my_dataframe.to_pandas()
+st.dataframe(pd_df)
+st.stop()
 fruit_mapping = {row["FRUIT_NAME"]: row["SEARCH_ON"] for row in my_dataframe.collect()}  # Dict fruit affiché → nom API
 
 # Liste des fruits affichés à l'utilisateur
